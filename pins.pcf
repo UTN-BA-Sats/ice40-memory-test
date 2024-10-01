@@ -1,0 +1,10 @@
+set_io clk 94
+set_io i_mosi 107
+set_io o_miso 105
+set_io i_cs 99
+set_io i_sck 97
+set_io led1 1
+set_io led2 2
+set_io led3 3
+set_io led4 4
+set_io button 31
