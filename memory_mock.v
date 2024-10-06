@@ -17,7 +17,7 @@ assign data_byte = cs == 1 ? (byte_sel == 1 ? r_data[15:8] : r_data[7:0]) : 8'bz
 initial begin : mem_init
     integer i;
     for(i = 0; i < 256; i = i + 1)
-        mem[i] = 16'h000A + i;
+        mem[i] = 16'h550A + i;
 end
 
 always @(posedge clk) begin

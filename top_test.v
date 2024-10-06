@@ -2,6 +2,7 @@
 `include "../spi_slave.v"
 `include "../address_mapper.v"
 `include "../fsm.v"
+`include "../signature.v"
 
 module top(
     input clk,
@@ -24,8 +25,8 @@ wire [7:0] w_rx_byte;
 
 wire [15:0] w_rx_addr;
 wire [7:0] w_data;
-wire [19:0] mem_cs_aux;
-wire [19:0] mem_cs;
+wire [20:0] mem_cs_aux;
+wire [20:0] mem_cs;
 wire mem_byte_sel;
 wire [7:0] w_mem_addr;
 wire w_addr_valid;
@@ -64,6 +65,14 @@ for(i = 0; i < 20; i = i+1) begin
         .byte_sel(mem_byte_sel)
     );
 end
+
+assign mem_cs[20] = mem_cs_aux[20] & w_addr_valid;
+
+Signature signature_inst(
+    .addr({w_mem_addr[0],mem_byte_sel}),
+    .cs(mem_cs[20]),
+    .data(w_data)
+);
 
 SPI_Slave spi_slave(
     .i_rst(srst),

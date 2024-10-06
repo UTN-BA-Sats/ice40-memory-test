@@ -21,28 +21,9 @@ IGNORED_SRC_FOLDERS = ["__pycache__", "sim_build"]
 
 DUT = "top"
 
-@cocotb.test()
-async def integration_test(dut):
-    SPI_PERIOD = 100
+SPI_PERIOD = 100
 
-    addr_low = 0x00
-    addr_high = 0x00
-
-    clkTask = Clock(dut.clk, 10, units="ns")
-    cocotb.start_soon(clkTask.start())
-
-    dut.i_rst = 0
-    dut.i_sck = 0
-    dut.i_cs = 1
-    dut.i_mosi = 0
-
-    # Reset and initial values
-    for i in range(5):
-        await RisingEdge(dut.clk)
-
-    dut.i_rst = 1
-
-    dut.i_cs = 0
+async def send_address(dut, addr_high, addr_low):
     dut.i_mosi = (addr_high >> 7) & 0x01
 
     for bit in range(6, -1, -1):
@@ -69,18 +50,70 @@ async def integration_test(dut):
     dut.i_sck = 1
     await Timer(SPI_PERIOD/2, units="ns")
 
-    for addr in range(5):
+async def read_byte(dut):
+    dut.i_sck = 0
+
+    rx_data = 0
+    for bit in range(7, -1, -1):
         dut.i_sck = 0
+        await Timer(SPI_PERIOD/2, units="ns")
+        dut.i_sck = 1
+        rx_data |= int(dut.o_miso) << bit
+        await Timer(SPI_PERIOD/2, units="ns")
 
-        rx_data = 0
-        for bit in range(7, -1, -1):
-            dut.i_sck = 0
-            await Timer(SPI_PERIOD/2, units="ns")
-            dut.i_sck = 1
-            rx_data |= int(dut.o_miso) << bit
-            await Timer(SPI_PERIOD/2, units="ns")
+    return rx_data
 
+@cocotb.test()
+async def integration_test(dut):
+    addr_low = 0x00
+    addr_high = 0x00
+
+    clkTask = Clock(dut.clk, 10, units="ns")
+    cocotb.start_soon(clkTask.start())
+
+    dut.i_rst = 0
+    dut.i_sck = 0
+    dut.i_cs = 1
+    dut.i_mosi = 0
+
+    # Reset and initial values
+    for i in range(5):
+        await RisingEdge(dut.clk)
+
+    dut.i_rst = 1
+
+    dut.i_cs = 0
+    await send_address(dut, addr_high, addr_low)
+
+    dummy = await read_byte(dut)
+
+    expected_data = [0x0a, 0x55, 0x0b, 0x55]
+
+    for e in expected_data:
+        rx_data = await read_byte(dut)
         print("data from memory = ", hex(rx_data))
+        assert e == rx_data
+
+    dut.i_sck = 0
+    dut.i_cs = 1
+
+    addr_low = 0x00
+    addr_high = 0x28
+
+    for i in range(5):
+        await RisingEdge(dut.clk)
+
+    dut.i_cs = 0
+    await send_address(dut, addr_high, addr_low)
+
+    expected_rom_data = [0x2b, 0xa7, 0x56, 0x8b]
+
+    dummy = await read_byte(dut)
+
+    for e in expected_rom_data:
+        rx_data = await read_byte(dut)
+        print("data from ROM = ", hex(rx_data))
+        assert e == rx_data
 
     dut.i_sck = 0
     dut_i_cs = 1

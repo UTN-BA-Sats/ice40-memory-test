@@ -20,34 +20,23 @@ COCOTB_HDL_TIMEPRECISION = "1ps"
 IGNORED_SRC_FOLDERS = ["__pycache__", "sim_build"]
 
 
-DUT = "Address_Mapper"
+DUT = "Signature"
 
 @cocotb.test()
-async def memory_mapper(dut):
-    addr = 0x17AD
+async def check_signature_rom(dut):
+    expected_data = [0x2b, 0xa7, 0x56, 0x8b]
 
-    dut.i_addr = addr;
+    addr = 0
+    for e in expected_data:
+        dut.addr = addr
+        dut.cs = 1
+        await Timer(1, units="ns")
+        assert e == dut.data
+        addr += 1
+
+    dut.cs = 0
     await Timer(1, units="ns")
-    assert 1 == dut.o_bank
-    assert 0xD6 == dut.o_byte_addr
-
-    for i in range(21):
-        if i == 11:
-            assert 1 == dut.o_ram_cs[i]
-        else:
-            assert 0 == dut.o_ram_cs[i]
-
-    addr = 0x2802
-    dut.i_addr = addr
-    await Timer(1, units="ns")
-    assert 0 == dut.o_bank
-    assert 1 == dut.o_byte_addr
-
-    for i in range(21):
-        if i == 20:
-            assert 1 == dut.o_ram_cs[i]
-        else:
-            assert 0 == dut.o_ram_cs[i]
+    assert 'zzzzzzzz' == dut.data.value.binstr
 
 def test_simple_dff_runner():
 
@@ -89,7 +78,7 @@ def test_simple_dff_runner():
             print(f"Ignoring folder {dirname}")
             continue
         for name in files:
-            if name.endswith("address_mapper.v"):
+            if name.endswith("signature.v"):
                 sourcePath = os.path.join(path, name)
                 print("Adding source: " + sourcePath)
                 sources.append(os.path.relpath(sourcePath, proj_path))
@@ -107,7 +96,7 @@ def test_simple_dff_runner():
     try:
         runner.test(
             toplevel=DUT, 
-            py_module="test_address_mapper"
+            py_module="test_signature"
             )
     except:
         pass

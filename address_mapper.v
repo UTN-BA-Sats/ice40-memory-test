@@ -1,6 +1,6 @@
 module Address_Mapper(
     input [15:0] i_addr,
-    output [19:0] o_ram_cs,
+    output [20:0] o_ram_cs,
     output [7:0] o_byte_addr,
     output o_bank
 );

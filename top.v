@@ -3,6 +3,7 @@
 `include "test.v"
 `include "address_mapper.v"
 `include "fsm.v"
+`include "signature.v"
 
 module reset_handler(
     input clk,
@@ -49,8 +50,8 @@ wire [7:0] w_rx_byte;
 
 wire [15:0] w_rx_addr;
 wire [7:0] w_data;
-wire [19:0] mem_cs_aux;
-wire [19:0] mem_cs;
+wire [20:0] mem_cs_aux;
+wire [20:0] mem_cs;
 wire mem_byte_sel;
 wire [7:0] w_mem_addr;
 wire w_addr_valid;
@@ -83,7 +84,7 @@ FSM fsm_inst(
 
 genvar i;
 
-for(i = 0; i < 20; i = i + 1) begin
+for(i = 0; i < 21; i = i + 1) begin
     assign mem_cs[i] = mem_cs_aux[i] & w_addr_valid;
 end
 
@@ -92,8 +93,14 @@ MemorySet memory_set_inst(
     .reset(srst),
     .addr(w_mem_addr),
     .data_byte(w_data),
-    .cs(mem_cs),
+    .cs(mem_cs[19:0]),
     .byte_sel(mem_byte_sel)
+);
+
+Signature signature_inst(
+    .addr({w_mem_addr[0],mem_byte_sel}),
+    .cs(mem_cs[20]),
+    .data(w_data)
 );
 
 SPI_Slave spi_slave(
