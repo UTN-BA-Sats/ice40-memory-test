@@ -2206,10 +2206,10 @@
 		)
 		(uuid "ec5dd316-9628-4d83-8897-28d0f5be5600")
 	)
-	(text_box "Connections:\n* ESP32 IO14 -> EDU-FPGA 107 (MOSI)\n* ESP32 IO27 -> EDU-FPGA 105 (MISO)\n* ESP32 IO26 -> EDU-FPGA 99  (CS)\n* ESP32 IO25 -> EDU-FPGA 97  (SCK)\n* ESP32 IO13 -> control\n* out -> EDU-FPGA 5V\n* GND -> EDU-FPGA GND"
+	(text_box "Connections:\n* MOSI -> EDU-FPGA 107\n* MISO -> EDU-FPGA 105\n* CS   -> EDU-FPGA 99\n* SCK  -> EDU-FPGA 97"
 		(exclude_from_sim no)
 		(at 154.94 93.98 0)
-		(size 44.45 20.32)
+		(size 34.29 13.97)
 		(stroke
 			(width 0)
 			(type default)
