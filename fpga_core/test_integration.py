@@ -63,8 +63,23 @@ async def read_byte(dut):
 
     return rx_data
 
+async def write_byte(dut, data):
+    dut.i_sck = 0
+    dut.i_mosi = (data >> 7) & 0x01
+
+    for bit in range(6, -1, -1):
+        await Timer(SPI_PERIOD/2, units="ns")
+        dut.i_sck = 1
+        await Timer(SPI_PERIOD/2, units="ns")
+        dut.i_sck = 0
+        dut.i_mosi = (data >> bit) & 0x01
+
+    await Timer(SPI_PERIOD/2, units="ns")
+    dut.i_sck = 1
+    await Timer(SPI_PERIOD/2, units="ns")
+
 @cocotb.test()
-async def integration_test(dut):
+async def integration_test_read(dut):
     addr_low = 0x00
     addr_high = 0x00
 
@@ -116,7 +131,53 @@ async def integration_test(dut):
         assert e == rx_data
 
     dut.i_sck = 0
-    dut_i_cs = 1
+    dut.i_cs = 1
+
+@cocotb.test()
+async def integration_test_write(dut):
+    addr_low = 0x00
+    addr_high = 0x80
+    bytes_to_write = [0x24, 0xBA]
+
+    clkTask = Clock(dut.clk, 10, units="ns")
+    cocotb.start_soon(clkTask.start())
+
+    dut.i_rst = 0
+    dut.i_sck = 0
+    dut.i_cs = 1
+    dut.i_mosi = 0
+
+    # Reset and initial values
+    for i in range(5):
+        await RisingEdge(dut.clk)
+
+    dut.i_rst = 1
+
+    dut.i_cs = 0
+
+    await send_address(dut, addr_high, addr_low)
+    await write_byte(dut, bytes_to_write[0])
+    await write_byte(dut, bytes_to_write[1])
+
+    dut.i_cs = 1
+    dut.i_sck = 0
+
+    for i in range(5):
+        await RisingEdge(dut.clk)
+
+    dut.i_cs = 0
+
+    addr_high = 0x00
+    await send_address(dut, addr_high, addr_low)
+    dummy = await read_byte(dut)
+
+    for b in bytes_to_write:
+        rx_data = await read_byte(dut)
+        print("read back data from memory = ", hex(rx_data))
+        assert b == rx_data
+
+    dut.i_sck = 0
+    dut.i_cs = 1
 
 def test_simple_dff_runner():
 

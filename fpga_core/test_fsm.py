@@ -23,7 +23,7 @@ IGNORED_SRC_FOLDERS = ["__pycache__", "sim_build"]
 DUT = "FSM"
 
 @cocotb.test()
-async def state_machine(dut):
+async def state_machine_read_mem(dut):
     clkTask = Clock(dut.i_clk, 10, units="ns")
     cocotb.start_soon(clkTask.start())
 
@@ -42,21 +42,24 @@ async def state_machine(dut):
         await RisingEdge(dut.i_clk)
 
     assert 0 == dut.o_addr_valid
+    assert 0 == dut.o_mem_rw
 
-    dut.i_rx_byte = 0xAA
+    dut.i_rx_byte = 0x55
     dut.i_data_valid = 1
     await RisingEdge(dut.i_clk)
     dut.i_data_valid = 0
     await RisingEdge(dut.i_clk)
 
     assert 0 == dut.o_addr_valid
+    assert 0 == dut.o_mem_rw
 
     for i in range(14):
         await RisingEdge(dut.i_clk)
 
     assert 0 == dut.o_addr_valid
+    assert 0 == dut.o_mem_rw
 
-    dut.i_rx_byte = 0x55
+    dut.i_rx_byte = 0xAA
     dut.i_data_valid = 1
     await RisingEdge(dut.i_clk)
     dut.i_data_valid = 0
@@ -71,12 +74,13 @@ async def state_machine(dut):
     # LSB_RECEIVED -> READ_MEM
 
     assert 1 == dut.o_addr_valid
-    assert 0xAA55 == dut.o_rx_addr
+    assert 0x55AA == dut.o_rx_addr
 
     await RisingEdge(dut.i_clk)
     await ReadOnly()
 
     assert 1 == dut.o_data_valid
+    assert 0 == dut.o_mem_rw
 
     for i in range(10):
         await RisingEdge(dut.i_clk)
@@ -100,7 +104,107 @@ async def state_machine(dut):
     # o_rx_addr <= o_rx_addr + 1
 
     assert 0 == dut.o_data_valid
+    assert 0 == dut.o_mem_rw
+    assert 0x55AB == dut.o_rx_addr
+
+@cocotb.test()
+async def state_machine_write_mem(dut):
+    clkTask = Clock(dut.i_clk, 10, units="ns")
+    cocotb.start_soon(clkTask.start())
+
+    dut.i_cs = 1;
+    dut.i_rx_byte = 0;
+    dut.i_data_valid = 0;
+    dut.i_tx_ready = 0;
+
+    # Reset and initial values
+    for i in range(5):
+        await RisingEdge(dut.i_clk)
+
+    dut.i_cs = 0;
+
+    for i in range(8):
+        await RisingEdge(dut.i_clk)
+
+    assert 0 == dut.o_addr_valid
+    assert 0 == dut.o_mem_rw
+
+    dut.i_rx_byte = 0xAA
+    dut.i_data_valid = 1
+    await RisingEdge(dut.i_clk)
+    dut.i_data_valid = 0
+    await RisingEdge(dut.i_clk)
+
+    assert 0 == dut.o_addr_valid
+    assert 0 == dut.o_mem_rw
+
+    for i in range(14):
+        await RisingEdge(dut.i_clk)
+
+    assert 0 == dut.o_addr_valid
+    assert 0 == dut.o_mem_rw
+
+    dut.i_rx_byte = 0x55
+    dut.i_data_valid = 1
+    await RisingEdge(dut.i_clk)
+    dut.i_data_valid = 0
+    await RisingEdge(dut.i_clk)
+
+    # LSB_RECEIVING -> LSB_RECEIVED
+
+    await RisingEdge(dut.i_clk)
+    await ReadOnly()
+
+    # data stored to o_rx_addr and o_addr_valid set to 1
+    # LSB_RECEIVED -> DATA_RECEIVING
+
+    assert 1 == dut.o_addr_valid
+    assert 0xAA55 == dut.o_rx_addr
+
+    await RisingEdge(dut.i_clk)
+    dut.i_rx_byte = 0x46
+    dut.i_data_valid = 1
+
+    await RisingEdge(dut.i_clk)
+    # DATA_RECEIVING -> DATA_RECEIVED
+
+    dut.i_data_valid = 0
+
+    await RisingEdge(dut.i_clk)
+    await ReadOnly()
+
+    assert 0 == dut.o_data_valid
+    assert 1 == dut.o_mem_rw
+    assert 0x46 == dut.o_rx_data
+
+    # DATA_RECEIVED -> DATA_STORED
+
+    await RisingEdge(dut.i_clk)
+    await ReadOnly()
+
+    # DATA_STORED -> DATA_RECEIVING
+    assert 0 == dut.o_data_valid
+    assert 0 == dut.o_mem_rw
     assert 0xAA56 == dut.o_rx_addr
+
+    for i in range(10):
+        await RisingEdge(dut.i_clk)
+
+    dut.i_rx_byte = 0xCD
+    dut.i_data_valid = 1
+    await RisingEdge(dut.i_clk)
+
+    # DATA_RECEIVING -> DATA_RECEIVED
+
+    dut.i_data_valid = 0
+
+    await RisingEdge(dut.i_clk)
+    await ReadOnly()
+
+    assert 0 == dut.o_data_valid
+    assert 1 == dut.o_mem_rw
+    assert 0xCD == dut.o_rx_data
+
 
 def test_simple_dff_runner():
 

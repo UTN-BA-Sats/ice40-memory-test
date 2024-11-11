@@ -28,8 +28,7 @@ async def memory_mapper(dut):
 
     dut.i_addr = addr;
     await Timer(1, units="ns")
-    assert 1 == dut.o_bank
-    assert 0xD6 == dut.o_byte_addr
+    assert 0x1AD == dut.o_byte_addr
 
     for i in range(21):
         if i == 11:
@@ -40,8 +39,7 @@ async def memory_mapper(dut):
     addr = 0x2802
     dut.i_addr = addr
     await Timer(1, units="ns")
-    assert 0 == dut.o_bank
-    assert 1 == dut.o_byte_addr
+    assert 2 == dut.o_byte_addr
 
     for i in range(21):
         if i == 20:
