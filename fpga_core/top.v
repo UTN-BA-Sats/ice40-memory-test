@@ -1,6 +1,5 @@
 `include "memory_set.v"
 `include "spi_slave.v"
-`include "test.v"
 `include "address_mapper.v"
 `include "fsm.v"
 `include "signature.v"
@@ -49,14 +48,13 @@ assign led4 = 0;
 wire [7:0] w_rx_byte;
 
 wire [15:0] w_rx_addr;
-wire [7:0] w_data;
+wire [7:0] w_data_write;
+wire [7:0] w_data_read;
 wire [20:0] mem_cs_aux;
 wire [20:0] mem_cs;
-wire mem_byte_sel;
-wire [7:0] w_mem_addr;
+wire [8:0] w_mem_addr;
 wire w_addr_valid;
-
-wire [2:0] test_fsm_state;
+wire w_mem_rw;
 
 reset_handler reset_handler_inst(
     .clk(clk),
@@ -66,8 +64,7 @@ reset_handler reset_handler_inst(
 Address_Mapper address_mapper_inst(
     .i_addr(w_rx_addr),
     .o_ram_cs(mem_cs_aux),
-    .o_byte_addr(w_mem_addr),
-    .o_bank(mem_byte_sel)
+    .o_byte_addr(w_mem_addr)
 );
 
 FSM fsm_inst(
@@ -78,8 +75,9 @@ FSM fsm_inst(
     .i_tx_ready(tx_ready),
     .o_rx_addr(w_rx_addr),
     .o_addr_valid(w_addr_valid),
-    .o_state_test(test_fsm_state),
-    .o_data_valid(tx_data_valid)
+    .o_data_valid(tx_data_valid),
+    .o_rx_data(w_data_write),
+    .o_mem_rw(w_mem_rw)
 );
 
 genvar i;
@@ -92,15 +90,16 @@ MemorySet memory_set_inst(
     .clk(clk),
     .reset(srst),
     .addr(w_mem_addr),
-    .data_byte(w_data),
+    .i_data_byte(w_data_write),
+    .o_data_byte(w_data_read),
     .cs(mem_cs[19:0]),
-    .byte_sel(mem_byte_sel)
+    .rw(w_mem_rw)
 );
 
 Signature signature_inst(
-    .addr({w_mem_addr[0],mem_byte_sel}),
+    .addr(w_mem_addr[1:0]),
     .cs(mem_cs[20]),
-    .data(w_data)
+    .data(w_data_read)
 );
 
 SPI_Slave spi_slave(
@@ -109,7 +108,7 @@ SPI_Slave spi_slave(
     .o_rx_valid(rx_data_valid),
     .o_rx_byte(w_rx_byte),
     .i_tx_valid(tx_data_valid),
-    .i_tx_byte(w_data),
+    .i_tx_byte(w_data_read),
     .o_tx_ready(tx_ready),
 
     .i_sck(i_sck),

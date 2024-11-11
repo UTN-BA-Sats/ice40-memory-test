@@ -3,19 +3,21 @@
 module MemorySet(
     input clk,
     input reset,
-    input [7:0] addr,
+    input [8:0] addr,
     input [19:0] cs,
-    input byte_sel,
-    output [7:0] data_byte
+    input rw,
+    input [7:0] i_data_byte,
+    output [7:0] o_data_byte
 );
 
 Memory memory_inst0(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[0]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst0.INIT_0 = 256'hedc176b13db130c855f9dd712ec6ddfe9976709a3d2a4d634de00f2d629fe86d;
 defparam memory_inst0.INIT_1 = 256'h52dcb7b6b965f7058504f603525440be0f1952b0b46df6a32cabb007d95790bb;
@@ -38,9 +40,10 @@ Memory memory_inst1(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[1]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst1.INIT_0 = 256'h8d2a1283d7ded2a6d4e8dff6cdfe2ffdb798b76a284c4cd7bea325be2a753f69;
 defparam memory_inst1.INIT_1 = 256'h193d622906e40f3807448e5706f592e1e2d525fd20b701ac000aafbc70c49e1e;
@@ -63,9 +66,10 @@ Memory memory_inst2(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[2]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst2.INIT_0 = 256'h57f9fd5f417f4737c318561fdaf4c3891fa780d601fe7bdd061dff1c11dca3ec;
 defparam memory_inst2.INIT_1 = 256'hd12f20bacd7bb78745a66136e273cdee2efa4b3981bd3c3443ceb1616300f886;
@@ -88,9 +92,10 @@ Memory memory_inst3(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[3]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst3.INIT_0 = 256'h447ab672a9adbbaf36d57b95d665f103081ac75fc87d779bcbefcbf07b18db5d;
 defparam memory_inst3.INIT_1 = 256'hc845a27daa9103971cfca6696dedbed2c47cb41f849e4c92b8ecf1649e5ef2ec;
@@ -113,9 +118,10 @@ Memory memory_inst4(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[4]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst4.INIT_0 = 256'h51d5396a2ca53bfc87dc128763fb8885385d95b2c9d9c3711cf19738212c9e21;
 defparam memory_inst4.INIT_1 = 256'hc7c97aa57175d868d0d9a3858f9ede4ca59316f3da92054c3d3599a79150c1c9;
@@ -138,9 +144,10 @@ Memory memory_inst5(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[5]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst5.INIT_0 = 256'h14af041d02db615f84737b0b9a3001377d6980fada219a50e208d11117bf1d34;
 defparam memory_inst5.INIT_1 = 256'h31ed100d46f5847e246a16f71cc41accf13eaa577a8157d22659539809ccfcc8;
@@ -163,9 +170,10 @@ Memory memory_inst6(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[6]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst6.INIT_0 = 256'hb36f3f74256503fe2980edf8a7908e1b491ae7797f188b90b944be086e8e95ea;
 defparam memory_inst6.INIT_1 = 256'hd3f21b7146a5410aa0d3c2474a51823deac5a906ab03af9ab7b61d84e2ab5c7d;
@@ -188,9 +196,10 @@ Memory memory_inst7(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[7]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst7.INIT_0 = 256'he0c33d37ad8580f4ab56b176f1e43c3e316ded508e76681db2ec07d1dc393c3b;
 defparam memory_inst7.INIT_1 = 256'h96e754111b6da59558bf16828e88b8e1dda3c69a6cd319b1010235d1bc3e3737;
@@ -213,9 +222,10 @@ Memory memory_inst8(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[8]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst8.INIT_0 = 256'hc64c7246a0e72af1f4e7c81d2f3f637bbd0f9deaeb1e17d4f4e2539d2d6220ea;
 defparam memory_inst8.INIT_1 = 256'h9492d547570c44978ecb27cd2540d4a3bf99310bd8de384a3afd5a370da977d0;
@@ -238,9 +248,10 @@ Memory memory_inst9(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[9]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst9.INIT_0 = 256'h9c605f1a492ee25e28ef5c78965bf6a29a4e8d401cc3a83a2fbe7d2db9791faf;
 defparam memory_inst9.INIT_1 = 256'h8126c922bb01d32afb25706b6f839969e9a9954cbb087790f92e9135f079d387;
@@ -263,9 +274,10 @@ Memory memory_inst10(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[10]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst10.INIT_0 = 256'h7f72915a6c007ddf14ae86d192c61b50bd621f5e417af588684e9165c894d83c;
 defparam memory_inst10.INIT_1 = 256'h082a275dd28ed6f9448045f336f0ee3bcf205a3b5a0a4c05477b548d00e16e09;
@@ -288,9 +300,10 @@ Memory memory_inst11(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[11]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst11.INIT_0 = 256'h97028312bf212cc03dba20a26daf7918ef377f6211eb7ed67ed829a170d8622b;
 defparam memory_inst11.INIT_1 = 256'h55051ea504b3aa821bbc96e791c6e4d3a7a0d4d288ad53b1a84b54ac941952fd;
@@ -313,9 +326,10 @@ Memory memory_inst12(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[12]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst12.INIT_0 = 256'hbfbbc7cc3ff62d3a769223e5c1edaa86d3e6e8a5a62c57a5bcd3380288885474;
 defparam memory_inst12.INIT_1 = 256'h24c153275ef11bb77f4288af1ab2f53df27617cb231cb7ab83bf3fd1a3cb7b82;
@@ -338,9 +352,10 @@ Memory memory_inst13(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[13]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst13.INIT_0 = 256'h01a71213be6161df14c5f964b4a92e1b4c55252f2200baa57094af96d66f6c19;
 defparam memory_inst13.INIT_1 = 256'h893a5abf59708d8b930c39703377a49fd572c4abe977ceea660b006fea9c3a4d;
@@ -363,9 +378,10 @@ Memory memory_inst14(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[14]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst14.INIT_0 = 256'h87fd56ea9f1aaed39f57b9b47a8b30513692a1c86f234e03f127723f35a42b81;
 defparam memory_inst14.INIT_1 = 256'h27e12683a771a2f7b8d987d71203e1c72c12042332dd9ac9c96015e7559cf13c;
@@ -388,9 +404,10 @@ Memory memory_inst15(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[15]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst15.INIT_0 = 256'hd38b4b4aa3ba90d05b9dcf58aa687fb88cab44006dde84712862a0fe5b384e87;
 defparam memory_inst15.INIT_1 = 256'h30c6c86dc71c3c384a5d7ea8b7cb502b4547250c26bf302a6272c1550fe0c71d;
@@ -413,9 +430,10 @@ Memory memory_inst16(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[16]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst16.INIT_0 = 256'h39e2d2fb929f6634fb850ffcca5380a1c2ba7644c664ac57413a2fb2a89a81a3;
 defparam memory_inst16.INIT_1 = 256'hc19dbedceddc24f37fd1171f68b8cb949c63215f447e83a55befa57c54256dc4;
@@ -438,9 +456,10 @@ Memory memory_inst17(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[17]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst17.INIT_0 = 256'h5bce46d4fa0fc575b92c77085a9c93783a1b6c5e943171d02792cea24652c1f2;
 defparam memory_inst17.INIT_1 = 256'h4e9addfcbfbbcf05aca7c24f307bea9d443d950727249c65ffe800b826fd8059;
@@ -463,9 +482,10 @@ Memory memory_inst18(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[18]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst18.INIT_0 = 256'hd9e14a50eb06758eaef7d024fa59853c42505fdf045d78208bf898e1466a19ac;
 defparam memory_inst18.INIT_1 = 256'h83f2886951841dfd3277c17aca6a187b34ff78ee548d8801d4d5e625d46410f1;
@@ -488,9 +508,10 @@ Memory memory_inst19(
     .clk(clk),
     .reset(reset),
     .addr(addr),
-    .data_byte(data_byte),
+    .i_data_byte(i_data_byte),
+    .o_data_byte(o_data_byte),
     .cs(cs[19]),
-    .byte_sel(byte_sel)
+    .rw(rw)
 );
 defparam memory_inst19.INIT_0 = 256'h07d9dcd9625f175da7f4ef654e89c673d8b99a55eea91cafee90f76f2d618320;
 defparam memory_inst19.INIT_1 = 256'h4a740534fb1cacc2b3fa2cb3b7202aeb397a5f076d6591c6ad44476d5e347d67;
