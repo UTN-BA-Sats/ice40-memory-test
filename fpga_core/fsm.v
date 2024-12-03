@@ -7,7 +7,7 @@ module FSM(
     output reg [15:0] o_rx_addr,
     output reg o_addr_valid,
     output reg o_data_valid,
-    output reg [7:0] o_rx_data,
+    output reg [15:0] o_rx_data,
     output reg o_mem_rw
 );
 
@@ -18,9 +18,11 @@ localparam LSB_RECEIVED = 4'b0011;
 localparam READ_MEM = 4'b0100;
 localparam LOAD_SPI = 4'b0101;
 localparam SEND = 4'b0110;
-localparam DATA_RECEIVING = 4'b0111;
-localparam DATA_RECEIVED = 4'b1000;
-localparam DATA_STORED = 4'b1001;
+localparam DATA_LSB_RECEIVING = 4'b0111;
+localparam DATA_LSB_RECEIVED = 4'b1000;
+localparam DATA_MSB_RECEIVING = 4'b1001;
+localparam DATA_MSB_RECEIVED = 4'b1010;
+localparam DATA_STORED = 4'b1011;
 
 reg [3:0] state;
 reg [3:0] next_state;
@@ -56,7 +58,7 @@ always @(*) begin
         LSB_RECEIVED: begin
             if(i_data_valid == 0) begin
                 if(o_rx_addr[15]) begin
-                    next_state = DATA_RECEIVING;
+                    next_state = DATA_LSB_RECEIVING;
                 end else begin
                     next_state = READ_MEM;
                 end
@@ -85,24 +87,40 @@ always @(*) begin
             next_state = READ_MEM;
         end
 
-        DATA_RECEIVING: begin
+        DATA_LSB_RECEIVING: begin
             if(i_data_valid == 1) begin
-                next_state = DATA_RECEIVED;
+                next_state = DATA_LSB_RECEIVED;
             end else begin
-                next_state = DATA_RECEIVING;
+                next_state = DATA_LSB_RECEIVING;
             end
         end
 
-        DATA_RECEIVED: begin
+        DATA_LSB_RECEIVED: begin
+            if(i_data_valid == 0) begin
+                next_state = DATA_MSB_RECEIVING;
+            end else begin
+                next_state = DATA_LSB_RECEIVED;
+            end
+        end
+
+        DATA_MSB_RECEIVING: begin
+            if(i_data_valid == 1) begin
+                next_state = DATA_MSB_RECEIVED;
+            end else begin
+                next_state = DATA_MSB_RECEIVING;
+            end
+        end
+
+        DATA_MSB_RECEIVED: begin
             if(i_data_valid == 0) begin
                 next_state = DATA_STORED;
             end else begin
-                next_state = DATA_RECEIVED;
+                next_state = DATA_MSB_RECEIVED;
             end
         end
 
         DATA_STORED: begin
-            next_state = DATA_RECEIVING;
+            next_state = DATA_LSB_RECEIVING;
         end
 
         default: next_state = START;
@@ -142,14 +160,18 @@ always @(posedge i_clk or posedge i_cs) begin
                 o_rx_addr <= o_rx_addr + 1;
             end
 
-            DATA_RECEIVED: begin
+            DATA_LSB_RECEIVED: begin
+                o_rx_data[7:0] <= r_rx_byte;
+            end
+
+            DATA_MSB_RECEIVED: begin
                 o_mem_rw <= 1;
-                o_rx_data <= r_rx_byte;
+                o_rx_data[15:8] <= r_rx_byte;
             end
 
             DATA_STORED: begin
                 o_mem_rw <= 0;
-                o_rx_addr <= o_rx_addr + 1;
+                o_rx_addr <= o_rx_addr + 2;
             end
         endcase
     end

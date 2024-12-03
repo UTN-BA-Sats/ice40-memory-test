@@ -144,7 +144,7 @@ async def state_machine_write_mem(dut):
     assert 0 == dut.o_addr_valid
     assert 0 == dut.o_mem_rw
 
-    dut.i_rx_byte = 0x55
+    dut.i_rx_byte = 0x54
     dut.i_data_valid = 1
     await RisingEdge(dut.i_clk)
     dut.i_data_valid = 0
@@ -159,14 +159,25 @@ async def state_machine_write_mem(dut):
     # LSB_RECEIVED -> DATA_RECEIVING
 
     assert 1 == dut.o_addr_valid
-    assert 0xAA55 == dut.o_rx_addr
+    assert 0xAA54 == dut.o_rx_addr
 
     await RisingEdge(dut.i_clk)
     dut.i_rx_byte = 0x46
     dut.i_data_valid = 1
 
     await RisingEdge(dut.i_clk)
-    # DATA_RECEIVING -> DATA_RECEIVED
+    # DATA_LSB_RECEIVING -> DATA_LSB_RECEIVED
+
+    dut.i_data_valid = 0
+
+    await RisingEdge(dut.i_clk)
+    # DATA_LSB_RECEIVED -> DATA_MSB_RECEIVING
+
+    dut.i_rx_byte = 0xCD
+    dut.i_data_valid = 1
+
+    await RisingEdge(dut.i_clk)
+    # DATA_MSB_RECEIVING -> DATA_MSB_RECEIVED
 
     dut.i_data_valid = 0
 
@@ -175,14 +186,14 @@ async def state_machine_write_mem(dut):
 
     assert 0 == dut.o_data_valid
     assert 1 == dut.o_mem_rw
-    assert 0x46 == dut.o_rx_data
+    assert 0xCD46 == dut.o_rx_data
 
-    # DATA_RECEIVED -> DATA_STORED
+    # DATA_MSB_RECEIVED -> DATA_STORED
 
     await RisingEdge(dut.i_clk)
     await ReadOnly()
 
-    # DATA_STORED -> DATA_RECEIVING
+    # DATA_STORED -> DATA_LSB_RECEIVING
     assert 0 == dut.o_data_valid
     assert 0 == dut.o_mem_rw
     assert 0xAA56 == dut.o_rx_addr
@@ -190,11 +201,22 @@ async def state_machine_write_mem(dut):
     for i in range(10):
         await RisingEdge(dut.i_clk)
 
-    dut.i_rx_byte = 0xCD
+    dut.i_rx_byte = 0xE5
     dut.i_data_valid = 1
     await RisingEdge(dut.i_clk)
 
-    # DATA_RECEIVING -> DATA_RECEIVED
+    # DATA_LSB_RECEIVING -> DATA_LSB_RECEIVED
+
+    dut.i_data_valid = 0
+
+    await RisingEdge(dut.i_clk)
+    # DATA_LSB_RECEIVED -> DATA_MSB_RECEIVING
+
+    dut.i_rx_byte = 0x98
+    dut.i_data_valid = 1
+
+    await RisingEdge(dut.i_clk)
+    # DATA_MSB_RECEIVING -> DATA_MSB_RECEIVED
 
     dut.i_data_valid = 0
 
@@ -203,7 +225,9 @@ async def state_machine_write_mem(dut):
 
     assert 0 == dut.o_data_valid
     assert 1 == dut.o_mem_rw
-    assert 0xCD == dut.o_rx_data
+    assert 0x98E5 == dut.o_rx_data
+
+    # DATA_MSB_RECEIVED -> DATA_STORED
 
 
 def test_simple_dff_runner():

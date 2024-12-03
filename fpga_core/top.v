@@ -48,11 +48,12 @@ assign led4 = 0;
 wire [7:0] w_rx_byte;
 
 wire [15:0] w_rx_addr;
-wire [7:0] w_data_write;
+wire [15:0] w_data_write;
 wire [7:0] w_data_read;
 wire [20:0] mem_cs_aux;
 wire [20:0] mem_cs;
-wire [8:0] w_mem_addr;
+wire w_read_byte_sel;
+wire [7:0] w_mem_addr;
 wire w_addr_valid;
 wire w_mem_rw;
 
@@ -64,7 +65,8 @@ reset_handler reset_handler_inst(
 Address_Mapper address_mapper_inst(
     .i_addr(w_rx_addr),
     .o_ram_cs(mem_cs_aux),
-    .o_byte_addr(w_mem_addr)
+    .o_byte_addr(w_mem_addr),
+    .o_bank(w_read_byte_sel)
 );
 
 FSM fsm_inst(
@@ -90,14 +92,15 @@ MemorySet memory_set_inst(
     .clk(clk),
     .reset(srst),
     .addr(w_mem_addr),
-    .i_data_byte(w_data_write),
+    .i_data_word(w_data_write),
     .o_data_byte(w_data_read),
     .cs(mem_cs[19:0]),
+    .read_byte_sel(w_read_byte_sel),
     .rw(w_mem_rw)
 );
 
 Signature signature_inst(
-    .addr(w_mem_addr[1:0]),
+    .addr({w_mem_addr[0],w_read_byte_sel}),
     .cs(mem_cs[20]),
     .data(w_data_read)
 );
