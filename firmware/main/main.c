@@ -25,7 +25,7 @@
 
 static const char TAG[] = "main";
 
-static uint8_t rxbuf[10240] = {0};
+static uint8_t rxbuf[10241] = {0};
 
 void setup_reset_gpio() {
   gpio_config_t io_conf = {.intr_type = GPIO_INTR_DISABLE,
@@ -47,21 +47,50 @@ void reset_fpga() {
 
 esp_err_t check_signature_rom(spi_device_handle_t fpga_handle) {
   const uint8_t EXPECTED_DATA[] = {0x2b, 0xa7, 0x56, 0x8b};
-  spi_transaction_t readtrans = {.addr = 0x2800, .rxlength = 32, .flags = SPI_TRANS_USE_RXDATA};
+  uint8_t rx_buf[5];
+  spi_transaction_t readtrans = {.addr = 0x2800, .rxlength = 8 * sizeof(rx_buf), .rx_buffer = rx_buf};
 
   esp_err_t ret = spi_device_polling_transmit(fpga_handle, &readtrans);
   if (ret != ESP_OK) {
     return ret;
   }
 
-  if (memcmp(EXPECTED_DATA, readtrans.rx_data, sizeof(EXPECTED_DATA))) {
+  const uint8_t *rx_bytes = &rx_buf[1];
+
+  if (memcmp(EXPECTED_DATA, rx_bytes, sizeof(EXPECTED_DATA))) {
     ESP_LOGE(TAG, "check_signature_rom: expected %02x %02x %02x %02x but read %02x %02x %02x %02x", EXPECTED_DATA[0],
-             EXPECTED_DATA[1], EXPECTED_DATA[2], EXPECTED_DATA[3], readtrans.rx_data[0], readtrans.rx_data[1],
-             readtrans.rx_data[2], readtrans.rx_data[3]);
+             EXPECTED_DATA[1], EXPECTED_DATA[2], EXPECTED_DATA[3], rx_bytes[0], rx_bytes[1], rx_bytes[2], rx_bytes[3]);
     return ESP_ERR_INVALID_RESPONSE;
   }
 
   return ESP_OK;
+}
+
+esp_err_t rewrite_ram(spi_device_handle_t fpga_handle) {
+  spi_transaction_t writetrans = {.addr = 0x8000, .length = 8 * sizeof(FPGA_RAM), .tx_buffer = FPGA_RAM};
+
+  return spi_device_polling_transmit(fpga_handle, &writetrans);
+}
+
+void log_memory(const uint8_t *mem, size_t size) {
+  char line[200];
+  int col = 0;
+  
+  for(size_t i = 0; i < size; i++) {
+    char byte[10];
+    sprintf(byte, "%02x ", mem[i]);
+
+    if(col == 0) {
+      sprintf(line, "%04x: ", i);
+    }
+
+    strcat(line, byte);
+
+    if(++col == 16 || i == size - 1) {
+      col = 0;
+      printf("%s\n", line);
+    }
+  }
 }
 
 void app_main(void) {
@@ -81,7 +110,7 @@ void app_main(void) {
 
   spi_device_interface_config_t devcfg = {
       .address_bits = 16,
-      .dummy_bits = 8,
+      .dummy_bits = 0,
       .clock_speed_hz = FPGA_CLK_FREQ,
       .mode = 0,
       .spics_io_num = PIN_NUM_CS,
@@ -99,18 +128,23 @@ void app_main(void) {
 
   vTaskDelay(pdMS_TO_TICKS(500));
 
+  int total_errors = 0;
+
   while (1) {
     int errors = 0;
-    spi_transaction_t readtrans = {.addr = 0, .rxlength = 8 * sizeof(FPGA_RAM), .rx_buffer = rxbuf};
+    spi_transaction_t readtrans = {.addr = 0, .rxlength = 8 * sizeof(rxbuf), .rx_buffer = rxbuf};
 
     memset(rxbuf, 0, sizeof(rxbuf));
 
     ret = spi_device_polling_transmit(devhandle, &readtrans);
 
+    // First byte is a dummy byte
+    const uint8_t *read_ram = &rxbuf[1];
+
     if (ret == ESP_OK) {
       size_t i;
       for (i = 0; i < sizeof(FPGA_RAM); i++) {
-        if (rxbuf[i] != FPGA_RAM[i]) {
+        if (read_ram[i] != FPGA_RAM[i]) {
           errors++;
         }
         taskYIELD();
@@ -121,8 +155,16 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "%d errors during RAM test", errors);
     if (errors > 0) {
-      ESP_LOG_BUFFER_HEX(TAG, rxbuf, sizeof(rxbuf));
+      total_errors++;
+      log_memory(read_ram, sizeof(FPGA_RAM));
+      
+      ret = rewrite_ram(devhandle);
+      if (ret != ESP_OK) {
+        ESP_LOGE(TAG, "rewrite_ram failed with result %d", ret);
+      }
     }
+
+    ESP_LOGI(TAG, "Total errors = %d", total_errors);
 
     ret = check_signature_rom(devhandle);
     if (ret == ESP_ERR_INVALID_RESPONSE) {
